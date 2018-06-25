@@ -1,12 +1,14 @@
 package com.gjn.promptviewlibrary;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.support.annotation.Nullable;
-import android.util.AttributeSet;
+import android.graphics.RectF;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -18,40 +20,52 @@ import java.util.List;
  */
 
 public class PromatView extends View {
-    private Paint paint;
+    private static final String TAG = "PromatView";
+
+    public static final int DEFAULT_BG  = 0x80000000;
+    public static final int WHITE       = 0xFFFFFFFF;
+
+    private Paint bgPaint;
+    private Paint bmPaint;
+    private int bgColor = DEFAULT_BG;
     private List<View> views = new ArrayList<>();
 
     private boolean isTouch = false;
 
+    private shapeDrawHelper drawHelper;
+
     public PromatView(Context context) {
-        this(context, null);
-    }
-
-    public PromatView(Context context, @Nullable AttributeSet attrs) {
-        this(context, attrs, 0);
-    }
-
-    public PromatView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        paint = new Paint();
-        paint.setColor(Color.RED);
-        //抗锯齿
-        paint.setAntiAlias(true);
-        //处理抖动
-        paint.setDither(true);
-        paint.setTextSize(24);
+        super(context);
+        //初始化Paint
+        bgPaint = new Paint();
+        bgPaint.setColor(bgColor);
+        bgPaint.setAntiAlias(true); //抗锯齿
+        bmPaint = new Paint();
+        bmPaint.setColor(WHITE);
+        bmPaint.setAntiAlias(true); //抗锯齿
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-
+        bgPaint.setColor(bgColor);
+        //绘制一个蒙版背景
+        Bitmap bitmap = Bitmap.createBitmap(canvas.getWidth(), canvas.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas bmCanvas = new Canvas(bitmap);
+        bmCanvas.drawRect(0, 0, bmCanvas.getWidth(), bmCanvas.getHeight(), bgPaint);
+        //绘制需要透明的地方
+        //设置图形混合方式，这里使用PorterDuff.Mode.XOR模式，与底层重叠部分设为透明
+        PorterDuffXfermode mode = new PorterDuffXfermode(PorterDuff.Mode.XOR);
+        bmPaint.setXfermode(mode);
         for (View view : views) {
-            Rect rect = new Rect();
-            getRect(view, rect);
-            paint.setStyle(Paint.Style.STROKE);
-            canvas.drawRect(rect, paint);
+            if (drawHelper != null) {
+                drawHelper.drawShape(bmCanvas, getRect(view), bmPaint);
+            } else {
+                drawOval(bmCanvas, view, bmPaint);
+            }
         }
+        //将整个bitmap绘制到主画布
+        canvas.drawBitmap(bitmap, 0, 0, bgPaint);
     }
 
     @Override
@@ -62,28 +76,39 @@ public class PromatView extends View {
         return false;
     }
 
-    public void addRectView(View view){
-        if (!hasView(view)) {
+    public void addRectView(View view) {
+        if (!hasView(view) && bgColor != 0) {
+            Log.i(TAG, "add view " + view.getClass().getSimpleName());
             views.add(view);
             invalidate();
         }
     }
 
-    public void removeRectView(View view){
+    public void removeRectView(View view) {
         if (hasView(view)) {
+            Log.i(TAG, "remove view " + view.getClass().getSimpleName());
             views.remove(view);
             invalidate();
         }
     }
 
-    public boolean hasView(View view){
+    public boolean hasView(View view) {
         if (views.contains(view)) {
             return true;
         }
         return false;
     }
 
-    public void clear(){
+    public void setDrawHelper(shapeDrawHelper drawHelper) {
+        this.drawHelper = drawHelper;
+        invalidate();
+    }
+
+    public void clearDrawHelper() {
+        setDrawHelper(null);
+    }
+
+    public void clear() {
         views.clear();
         invalidate();
     }
@@ -96,7 +121,29 @@ public class PromatView extends View {
         isTouch = touch;
     }
 
-    private void getRect(View view, Rect rect) {
-        view.getGlobalVisibleRect(rect);
+    public void setBgColor(int color) {
+        bgColor = color;
+        invalidate();
+    }
+
+    private void drawOval(Canvas canvas, View view, Paint paint) {
+        Rect rect = getRect(view);
+        canvas.drawOval(toRectF(rect), paint);
+    }
+
+    private Rect getRect(View view) {
+        Rect viewRect = new Rect();
+        view.getGlobalVisibleRect(viewRect);
+        return viewRect;
+    }
+
+    private RectF toRectF(Rect rect) {
+        RectF rectF = new RectF();
+        rectF.set(rect);
+        return rectF;
+    }
+
+    public interface shapeDrawHelper {
+        void drawShape(Canvas canvas, Rect rect, Paint paint);
     }
 }

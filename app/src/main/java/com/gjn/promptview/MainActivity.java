@@ -1,17 +1,23 @@
 package com.gjn.promptview;
 
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
+import com.gjn.promptviewlibrary.PromatLayout;
 import com.gjn.promptviewlibrary.PromatView;
 
 public class MainActivity extends AppCompatActivity {
 
-    private PromatView promatView;
+    private PromatLayout layout;
+    private TextView textView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,13 +26,10 @@ public class MainActivity extends AppCompatActivity {
 
         addPromatView();
 
-        promatView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                promatView.clear();
-                return true;
-            }
-        });
+        textView = new TextView(this);
+        textView.setBackgroundColor(Color.GRAY);
+        textView.setText("被点击之后出现的");
+        textView.setTextSize(20);
 
         setPromatView();
     }
@@ -44,14 +47,15 @@ public class MainActivity extends AppCompatActivity {
                     final ViewGroup child = (ViewGroup) view;
                     setting(child);
                 } else {
-                    Log.e("-s-", "child=====>" + view.getClass().getName() + " setClick");
                     view.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            if (promatView.hasView(v)) {
-                                promatView.removeRectView(v);
+                            if (layout.getPromatView().hasView(v)) {
+                                layout.getPromatView().removeRectView(v);
+                                layout.removeViewLayout();
                             } else {
-                                promatView.addRectView(v);
+                                layout.getPromatView().addRectView(v);
+                                layout.addViewLayout(textView, v);
                             }
                         }
                     });
@@ -68,9 +72,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addPromatView() {
-        promatView = new PromatView(this);
-        promatView.setBackgroundColor(Color.argb(50, 0, 0, 0));
         ViewGroup viewGroup = (ViewGroup) getWindow().getDecorView();
-        viewGroup.addView(promatView);
+        layout = new PromatLayout(this);
+        viewGroup.addView(layout);
+        layout.setEnabled(false);
     }
 }

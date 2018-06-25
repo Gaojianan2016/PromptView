@@ -1,9 +1,11 @@
 package com.gjn.promptviewlibrary;
 
 import android.content.Context;
+import android.graphics.Rect;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.util.AttributeSet;
+import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 /**
@@ -11,17 +13,55 @@ import android.widget.FrameLayout;
  */
 
 public class PromatLayout extends FrameLayout {
+    private static final String TAG = "PromatLayout";
+
+    private int srceenW;
+    private int srceenH;
+    private PromatView promatView;
+    private View child;
+
     public PromatLayout(@NonNull Context context) {
-        this(context, null);
+        super(context);
+        srceenW = context.getResources().getDisplayMetrics().widthPixels;
+        srceenH = context.getResources().getDisplayMetrics().heightPixels;
+
+        promatView = new PromatView(context);
+        addView(promatView);
     }
 
-    public PromatLayout(@NonNull Context context, @Nullable AttributeSet attrs) {
-        this(context, null, 0);
+    public void addViewLayout(View child, View to){
+        this.child = child;
+        checkParent(child);
+        Rect rect = getRect(to);
+
+        LayoutParams params = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        params.topMargin = rect.bottom;
+        params.leftMargin = rect.left;
+        child.setLayoutParams(params);
+        addView(child);
     }
 
-    public PromatLayout(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
+    public void removeViewLayout(){
+        if (child != null) {
+            removeView(child);
+        }
     }
 
+    public PromatView getPromatView(){
+        return promatView;
+    }
 
+    private void checkParent(View child) {
+        ViewGroup parent = (ViewGroup) child.getParent();
+        if (parent != null) {
+            Log.i(TAG, "remove parent!");
+            parent.removeView(child);
+        }
+    }
+
+    private Rect getRect(View view) {
+        Rect viewRect = new Rect();
+        view.getGlobalVisibleRect(viewRect);
+        return viewRect;
+    }
 }
