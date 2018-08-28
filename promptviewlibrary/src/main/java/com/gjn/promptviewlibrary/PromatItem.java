@@ -12,7 +12,7 @@ public class PromatItem {
     //提示view
     private View tipView;
     //标示view
-    private View view;
+    private View[] views;
 
     public String getTipMsg() {
         return tipMsg;
@@ -30,11 +30,11 @@ public class PromatItem {
         this.tipView = tipView;
     }
 
-    public View getView() {
-        return view;
+    public View[] getViews() {
+        return views;
     }
 
-    public void setView(View view) {
-        this.view = view;
+    public void setViews(View[] views) {
+        this.views = views;
     }
 }

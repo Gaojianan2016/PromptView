@@ -78,7 +78,7 @@ public class PromatView extends View {
 
     public void addRectView(View view) {
         if (!hasView(view) && bgColor != 0) {
-            Log.i(TAG, "addTask view " + view.getClass().getSimpleName());
+            Log.i(TAG, "addTask view = " + view.getClass().getSimpleName());
             views.add(view);
             invalidate();
         }
@@ -86,7 +86,7 @@ public class PromatView extends View {
 
     public void removeRectView(View view) {
         if (hasView(view)) {
-            Log.i(TAG, "remove view " + view.getClass().getSimpleName());
+            Log.i(TAG, "remove view = " + view.getClass().getSimpleName());
             views.remove(view);
             invalidate();
         }

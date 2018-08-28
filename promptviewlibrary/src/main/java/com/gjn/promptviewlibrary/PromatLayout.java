@@ -27,17 +27,21 @@ public class PromatLayout extends FrameLayout {
         super(context);
         srceenW = context.getResources().getDisplayMetrics().widthPixels;
         srceenH = context.getResources().getDisplayMetrics().heightPixels;
+        xPy = (int) (context.getResources().getDisplayMetrics().density * 5);
+        yPy = (int) (context.getResources().getDisplayMetrics().density * 5);
 
         promatView = new PromatView(context);
         addView(promatView);
     }
 
-    public void addViewLayout(View child, View showView) {
+    public void addViewLayout(View child, View... showViews) {
         this.child = child;
         checkParent(child);
-        child.setLayoutParams(getChildViewLayoutParams(getRect(showView), child));
+        child.setLayoutParams(getChildViewLayoutParams(getRect(showViews[0]), child));
         addView(child);
-        promatView.addRectView(showView);
+        for (View showView : showViews) {
+            promatView.addRectView(showView);
+        }
     }
 
     public void removeViewLayout() {

@@ -1,7 +1,11 @@
 package com.gjn.promptviewlibrary;
 
 import android.app.Activity;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,14 +21,20 @@ import java.util.List;
 public class PromatUtils {
     private static final String TAG = "PromatUtils";
 
+    public static final int OVAL_TYPE = 0;
+    public static final int RECT_TYPE = 1;
+    public static final int CIRCLE_TYPE = 2;
+
     private int maker;
     private List<PromatItem> lists = new ArrayList<>();
 
     private PromatLayout promatLayout;
     private ViewGroup decorView;
     private TextView tipTextView;
+    private Activity activity;
 
     public PromatUtils(Activity activity) {
+        this.activity = activity;
         tipTextView = new TextView(activity);
         tipTextView.setTextColor(Color.WHITE);
 
@@ -38,17 +48,29 @@ public class PromatUtils {
         return this;
     }
 
-    public PromatUtils addTask(String tip, View view) {
+    public PromatUtils addTask(Object tip, View... views) {
         PromatItem item = new PromatItem();
-        item.setTipMsg(tip);
-        item.setView(view);
+        if (tip instanceof String) {
+            item.setTipMsg((String) tip);
+        }else if(tip instanceof View){
+            item.setTipView((View) tip);
+        }
+        item.setViews(views);
         return addTask(item);
     }
 
-    public PromatUtils addTask(View tipView, View view) {
+    public PromatUtils addTask(Object tip, int... viewIds) {
         PromatItem item = new PromatItem();
-        item.setTipView(tipView);
-        item.setView(view);
+        if (tip instanceof String) {
+            item.setTipMsg((String) tip);
+        }else if(tip instanceof View){
+            item.setTipView((View) tip);
+        }
+        View[] views = new View[viewIds.length];
+        for (int i = 0; i < viewIds.length; i++) {
+            views[i] = activity.findViewById(viewIds[i]);
+        }
+        item.setViews(views);
         return addTask(item);
     }
 
@@ -85,6 +107,37 @@ public class PromatUtils {
         });
     }
 
+    public void setPromatDrawHelper(PromatView.shapeDrawHelper drawHelper){
+        promatLayout.getPromatView().setDrawHelper(drawHelper);
+    }
+
+    public void setXYpyByDp(int xPy, int yPy){
+        DisplayMetrics displayMetrics = activity.getResources().getDisplayMetrics();
+        promatLayout.setxPy((int) (xPy * displayMetrics.density));
+        promatLayout.setyPy((int) (yPy * displayMetrics.density));
+    }
+
+    public void setType(int type){
+        if (type == RECT_TYPE) {
+            promatLayout.getPromatView().setDrawHelper(new PromatView.shapeDrawHelper() {
+                @Override
+                public void drawShape(Canvas canvas, Rect rect, Paint paint) {
+                    canvas.drawRect(rect, paint);
+                }
+            });
+        }else if (type == CIRCLE_TYPE) {
+            promatLayout.getPromatView().setDrawHelper(new PromatView.shapeDrawHelper() {
+                @Override
+                public void drawShape(Canvas canvas, Rect rect, Paint paint) {
+                    int r = Math.min(rect.width(), rect.height());
+                    canvas.drawCircle(rect.centerX(), rect.centerY(), r, paint);
+                }
+            });
+        }else {
+            promatLayout.getPromatView().setDrawHelper(null);
+        }
+    }
+
     public PromatLayout getPromatLayout() {
         return promatLayout;
     }
@@ -97,11 +150,11 @@ public class PromatUtils {
         promatLayout.removeViewLayout();
         PromatItem item = lists.get(maker);
         if (item.getTipView() != null) {
-            promatLayout.addViewLayout(item.getTipView(), item.getView());
+            promatLayout.addViewLayout(item.getTipView(), item.getViews());
         } else {
             String tip = item.getTipMsg();
             tipTextView.setText(tip);
-            promatLayout.addViewLayout(tipTextView, item.getView());
+            promatLayout.addViewLayout(tipTextView, item.getViews());
         }
     }
 
